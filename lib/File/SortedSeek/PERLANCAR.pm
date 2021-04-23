@@ -45,8 +45,10 @@ sub binsearch {
     my $string      = shift;
     my $compare_ref = shift;
     my $munge_ref   = shift;
+    my $minoffset   = shift;
+    my $maxoffset   = shift;
     $error_msg   = '';
-    _look( *FILE, $string, $compare_ref, $munge_ref );
+    _look( *FILE, $string, $compare_ref, $munge_ref, $minoffset, $maxoffset );
 }
 
 sub _alphabetic_compare { $descending ? $_[1] cmp $_[0] : $_[0] cmp $_[1] }
@@ -55,8 +57,10 @@ sub alphabetic {
     local *FILE     = shift;
     my $string      = shift;
     my $munge_ref   = shift;
+    my $minoffset   = shift;
+    my $maxoffset   = shift;
     $error_msg   = '';
-    _look( *FILE, $string, \&_alphabetic_compare, $munge_ref );
+    _look( *FILE, $string, \&_alphabetic_compare, $munge_ref, $minoffset, $maxoffset );
 }
 
 sub _numeric_compare { $descending ? $_[1] <=> $_[0] : $_[0] <=> $_[1] }
@@ -65,8 +69,10 @@ sub numeric {
     local *FILE     = shift;
     my $number      = shift;
     my $munge_ref   = shift;
+    my $minoffset   = shift;
+    my $maxoffset   = shift;
     $error_msg   = '';
-    _look( *FILE, $number, \&_numeric_compare, $munge_ref  );
+    _look( *FILE, $number, \&_numeric_compare, $munge_ref, $minoffset, $maxoffset );
 }
 
 sub find_time {
@@ -163,18 +169,26 @@ sub get_last {
 
 sub _look {
     local *FILE = shift;
-    my($key,$comp,$xfrm) = @_;
+    my($key,$comp,$xfrm,$minoffset,$maxoffset) = @_;
     local $_;
     return undef if not defined $key;
-    my @stat = stat(FILE) or return undef;
-    my($size, $blksize) = @stat[7,11];
+    my($size, $blksize);
+    if (defined $maxoffset) {
+        $size = $maxoffset;
+    } else {
+        my @stat = stat(FILE) or return undef;
+        ($size, $blksize) = @stat[7,11];
+    }
     $blksize ||= 8192;
+    $minoffset ||= 0;
+    $size -= $minoffset;
+
     # find the right block
     my($min, $max) = (0, int($size / $blksize));
     my $mid;
     while ($max - $min > 1) {
         $mid = int(($max + $min) / 2);
-        seek(FILE, $mid * $blksize, 0) or return undef;
+        seek(FILE, $mid * $blksize + $minoffset, 0) or return undef;
         <FILE> if $mid; # probably a partial line
         $_ = <FILE>;
         $_ = $xfrm->($_) if $xfrm;
@@ -183,23 +197,23 @@ sub _look {
     }
     # find the right line
     $min *= $blksize;
-    seek(FILE,$min,0) or return undef;
+    seek(FILE,$min+$minoffset,0) or return undef;
     <FILE> if $min; # probably a partial line
     my $prev_min = $min;
     for (;;) {
-        $min = tell(FILE);
+        $min = tell(FILE) - $minoffset;
         defined($_ = <FILE>) or last;
         $_ = $xfrm->($_) if $xfrm;
         chomp;
         my $cmp = $comp->($_, $key);
         $exact_match = $cmp==0 ? 1 : 0;
         if(!$cuddle and $cmp  >= 0){
-            seek(FILE,$min,0);
-            return $min;
+            seek(FILE,$min+$minoffset,0);
+            return $min+$minoffset;
         }
         if($cuddle and $cmp > 0){
-            seek(FILE,$prev_min,0);
-            return $prev_min;
+            seek(FILE,$prev_min+$minoffset,0);
+            return $prev_min+$minoffset;
         }
         $prev_min = $min;
     }
@@ -275,7 +289,29 @@ thing.
 
 Usage:
 
- binsearch($fh, $value, \&compare [ , \&munge ]);
+ binsearch($fh, $value, \&compare [ , \&munge [ , $minoffset, $maxoffset ] ]);
+
+=item * $minoffset & $maxoffset arguments in numeric(), alphabetic(), binsearch()
+
+Usage:
+
+ numeric   ($fh, $value [ , \&munge [ , $minoffset, $maxoffset ] ]);
+ alphabetic($fh, $value [ , \&munge [ , $minoffset, $maxoffset ] ]);
+ binsearch ($fh, $value, \&compare [ , \&munge [ , $minoffset, $maxoffset ] ]);
+
+This limits the range within which binary searching is done. This also avoids
+using stat() on the filehandle. Useful when only want to search part of a file
+(like only in __DATA__ section of a Perl source file) or when using a tied
+filehandle which does not trap stat().
+
+=back
+
+
+=head1 TODOS
+
+=over
+
+=item * Also add $minoffset and $maxoffset arguments to get_between(), get_last()
 
 =back
 
