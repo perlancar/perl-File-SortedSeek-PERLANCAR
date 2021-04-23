@@ -14,7 +14,7 @@ use vars qw( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION );
 
 @ISA         = qw( Exporter );
 @EXPORT      = ();
-@EXPORT_OK   = qw( alphabetic numeric find_time get_between get_last );
+@EXPORT_OK   = qw( binsearch alphabetic numeric find_time get_between get_last );
 %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
 my $descending  = 0;
@@ -39,6 +39,15 @@ sub set_silent      { $silent = 1 };
 sub set_verbose     { $silent = 0 };
 sub was_exact       { $exact_match };
 sub error           { $error_msg; };
+
+sub binsearch {
+    local *FILE     = shift;
+    my $string      = shift;
+    my $compare_ref = shift;
+    my $munge_ref   = shift;
+    $error_msg   = '';
+    _look( *FILE, $string, $compare_ref, $munge_ref );
+}
 
 sub _alphabetic_compare { $descending ? $_[1] cmp $_[0] : $_[0] cmp $_[1] }
 
@@ -257,6 +266,16 @@ This module (File::SortedSeek::PERLANCAR) is a fork of L<File::SortedSeek>
 0.015, adding these things:
 
 =over
+
+=item * binsearch() function
+
+Not yet documented, but basically it accepts a comparator function for you to do
+custom comparison, much like how L<List::BinarySearch> allows you to do the same
+thing.
+
+Usage:
+
+ binsearch($fh, $value, \&compare [ , \&munge ]);
 
 =back
 
@@ -482,6 +501,7 @@ Example script in eg/tail.pl
 
 Nothing by default. The following 5 methods are available for import:
 
+    binsearch()
     alphabetic()
     numeric()
     find_time()
