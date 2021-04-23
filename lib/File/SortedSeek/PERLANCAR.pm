@@ -1,4 +1,10 @@
-package File::SortedSeek;
+package File::SortedSeek::PERLANCAR;
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
+
 use strict;
 use warnings;
 use Time::Local;
@@ -10,7 +16,6 @@ use vars qw( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION );
 @EXPORT      = ();
 @EXPORT_OK   = qw( alphabetic numeric find_time get_between get_last );
 %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
-$VERSION     = '0.015';
 
 my $descending  = 0;
 my $cuddle      = 0;
@@ -193,18 +198,13 @@ sub _look {
 }
 
 1;
-
-__END__
+# ABSTRACT: A fork of File::SortedSeek with some more options
 
 =pod
 
 =for stopwords Stig refactored ta da hh mm ss dd mm yyyy recognised
 
-=head1 NAME
-
-File::SortedSeek - A Perl module providing fast access to large files
-
-=head1 SYNOPSIS
+=head1 ORIGINAL SYNOPSIS
 
   use File::SortedSeek ':all';
   open BIG, $file or die $!;
@@ -252,6 +252,16 @@ File::SortedSeek - A Perl module providing fast access to large files
   @lines = get_last( *BIG, $n, $rec_sep )
 
 =head1 DESCRIPTION
+
+This module (File::SortedSeek::PERLANCAR) is a fork of L<File::SortedSeek>
+0.015, adding these things:
+
+=over
+
+=back
+
+
+=head1 ORIGINAL DESCRIPTION
 
 File::SortedSeek provides fast access to data from large files. Three
 methods numeric() alphabetic() and find_time() depend on the file data
@@ -563,11 +573,11 @@ of times are typical.
 
 An OO interface slows things down by > 50% so is not used.
 
-=head1 BUGS
+=head1 ORIGINAL BUGS
 
 All previously known ones have been removed.
 
-=head1 CREDITS
+=head1 ORIGINAL CREDITS
 
 Peter (Stig) Edwards for bugfixes and getting the refactoring started using
 the cunning expedient of not just sending patches but also a refactored core.
@@ -575,18 +585,18 @@ the cunning expedient of not just sending patches but also a refactored core.
 Search::Dict for the basis of the code used to replace the original core
 search function.
 
-=head1 AUTHOR
+=head1 ORIGINAL AUTHOR
 
 (c) Dr James Freeman 2000-08 <airmedical [TA] gmail.com>
 All rights reserved.
 
-=head1 LICENSE
+=head1 ORIGINAL LICENSE
 
 This package is free software and is provided "as is" without express or
 implied warranty. It may be used, redistributed and/or modified under the
 terms of the Artistic License 2.0. A copy is include in this distribution.
 
-=head1 SEE ALSO
+=head1 ORIGINAL SEE ALSO
 
 For details about the mystical significance of the number 42 and how it can
 be applied to Life the Universe and everything see The Hitch Hiker's Guide
