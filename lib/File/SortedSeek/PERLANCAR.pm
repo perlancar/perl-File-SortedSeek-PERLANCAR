@@ -48,7 +48,11 @@ sub binsearch {
     my $minoffset   = shift;
     my $maxoffset   = shift;
     $error_msg   = '';
-    _look( *FILE, $string, $compare_ref, $munge_ref, $minoffset, $maxoffset );
+    if ($descending) {
+        _look( *FILE, $string, sub { -$compare_ref->(@_) }, $munge_ref, $minoffset, $maxoffset );
+    } else {
+        _look( *FILE, $string, $compare_ref, $munge_ref, $minoffset, $maxoffset );
+    }
 }
 
 sub _alphabetic_compare { $descending ? $_[1] cmp $_[0] : $_[0] cmp $_[1] }
