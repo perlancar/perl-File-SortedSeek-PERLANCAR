@@ -15,26 +15,91 @@ note "tempdir=$dir";
 
 subtest "numeric" => sub {
     open my $fh, "<", "$dir/numeric";
-    for my $x (1..10) {
-        numeric($fh, $x);
-        chomp(my $res = <$fh>);
-        is($res, $x);
-    }
-    for my $x (reverse 1..10) {
-        numeric($fh, $x);
-        chomp(my $res = <$fh>);
-        is($res, $x);
-    }
+
+    subtest "no cuddle" => sub {
+        for my $x (1..10) {
+            my $tell = numeric($fh, $x);
+            # diag "x=$x, tell=$tell"; # 1=0, 2=2, 3=4, ..., 8=14, 9=16, 10=18
+            chomp(my $res = <$fh>);
+            is($res, $x);
+            ok(File::SortedSeek::PERLANCAR::was_exact());
+        }
+        my $tell;
+
+        $tell = numeric($fh, 0);
+        is_deeply($tell, 0);
+        $tell = numeric($fh, 11);
+        is_deeply($tell, undef);
+
+        for my $x (reverse 1..10) {
+            numeric($fh, $x);
+            chomp(my $res = <$fh>);
+            is($res, $x);
+            ok(File::SortedSeek::PERLANCAR::was_exact());
+        }
+    };
+
+    subtest "cuddle" => sub {
+        #require File::SortedSeek;
+
+        File::SortedSeek::PERLANCAR::set_cuddle();
+
+        my $tell;
+
+        $tell = numeric($fh, 0);
+        is_deeply($tell, 0);
+        ok(!File::SortedSeek::PERLANCAR::was_exact());
+
+        $tell = numeric($fh, 10);
+        is_deeply($tell, undef); # not cuddled between two lines
+
+        $tell = numeric($fh, 11);
+        is_deeply($tell, undef);
+
+        File::SortedSeek::PERLANCAR::set_no_cuddle();
+    };
 
     subtest "minoffset & maxoffset args" => sub {
         for my $x (2..7) {
             numeric($fh, $x, undef, 2, 13);
             chomp(my $res = <$fh>); is($res, $x);
+            ok(File::SortedSeek::PERLANCAR::was_exact());
         }
-        numeric($fh, 1, undef, 2, 13);
-        chomp(my $res = <$fh>); is_deeply($res, 2);
-        #numeric($fh, 8, undef, 2, 13);
-        #chomp(my $res = <$fh>); is_deeply($res, 8);
+        my $tell;
+
+        $tell = numeric($fh, 1, undef, 2, 13);
+        #diag "x=1, tell=$tell";
+        is_deeply($tell, 2);
+        ok(!File::SortedSeek::PERLANCAR::was_exact());
+
+        $tell = numeric($fh, 8, undef, 2, 13);
+        #diag "x=8, tell=$tell";
+        is_deeply($tell, undef);
+        ok(!File::SortedSeek::PERLANCAR::was_exact());
+
+        chomp(my $res = <$fh>); is_deeply($res, 8);
+    };
+
+    subtest "minoffset & maxoffset args + cuddle" => sub {
+        File::SortedSeek::PERLANCAR::set_cuddle();
+
+        for my $x (2..7) {
+            numeric($fh, $x, undef, 2, 13);
+            chomp(my $res = <$fh>); is($res, $x);
+        }
+        my $tell;
+
+        $tell = numeric($fh, 1, undef, 2, 13);
+        #diag "x=1, tell=$tell";
+        is_deeply($tell, 2);
+        ok(!File::SortedSeek::PERLANCAR::was_exact());
+
+        $tell = numeric($fh, 8, undef, 2, 13);
+        #diag "x=8, tell=$tell";
+        is_deeply($tell, undef);
+        ok(!File::SortedSeek::PERLANCAR::was_exact());
+
+        File::SortedSeek::PERLANCAR::set_no_cuddle();
     };
 };
 

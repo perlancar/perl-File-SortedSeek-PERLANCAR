@@ -182,6 +182,7 @@ sub _look {
     } else {
         my @stat = stat(FILE) or return undef;
         ($size, $blksize) = @stat[7,11];
+        $maxoffset = $size-1;
     }
     $blksize ||= 8192;
     $minoffset ||= 0;
@@ -213,11 +214,21 @@ sub _look {
         $exact_match = $cmp==0 ? 1 : 0;
         if(!$cuddle and $cmp  >= 0){
             seek(FILE,$min+$minoffset,0);
-            return $min+$minoffset;
+            if ($min+$minoffset > $maxoffset) {
+                $exact_match = 0;
+                return undef;
+            } else {
+                return $min+$minoffset;
+            }
         }
         if($cuddle and $cmp > 0){
             seek(FILE,$prev_min+$minoffset,0);
-            return $prev_min+$minoffset;
+            if ($prev_min+$minoffset > $maxoffset) {
+                $exact_match = 0;
+                return undef;
+            } else {
+                return $prev_min+$minoffset;
+            }
         }
         $prev_min = $min;
     }
