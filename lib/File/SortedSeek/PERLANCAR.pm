@@ -1,3 +1,5 @@
+## no critic : Modules::ProhibitAutomaticExportation
+
 package File::SortedSeek::PERLANCAR;
 
 # AUTHORITY
@@ -239,6 +241,8 @@ sub _look {
 # ABSTRACT: A fork of File::SortedSeek with some more options
 
 =pod
+
+=for Pod::Coverage ^(.+)$
 
 =for stopwords Stig refactored ta da hh mm ss dd mm yyyy recognised
 
